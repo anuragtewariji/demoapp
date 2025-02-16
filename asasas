@@ -1,0 +1,57 @@
+interface Lineage {
+  eventId: string;
+  source: string;
+  destination: string;
+}
+
+interface TreeNode {
+  lineage: Lineage;
+  children: TreeNode[];
+}
+
+function buildRecursiveTree(lineageList: Lineage[]): { tree: TreeNode[]; freeNodes: Lineage[] } {
+  const sourceMap = new Map<string, Lineage[]>();
+  const destinationMap = new Map<string, Lineage>();
+  
+  lineageList.forEach((lineage) => {
+    if (!sourceMap.has(lineage.source)) {
+      sourceMap.set(lineage.source, []);
+    }
+    sourceMap.get(lineage.source)?.push(lineage);
+    destinationMap.set(lineage.destination, lineage);
+  });
+
+  const roots: TreeNode[] = [];
+  const freeNodes: Lineage[] = [];
+  
+  function buildTree(lineage: Lineage): TreeNode {
+    return {
+      lineage,
+      children: sourceMap.get(lineage.destination)?.map(buildTree) || []
+    };
+  }
+  
+  lineageList.forEach((lineage) => {
+    if (!destinationMap.has(lineage.source) || lineage.destination === 'XXXY') {
+      roots.push(buildTree(lineage));
+    }
+  });
+  
+  const allTreeNodes = new Set(roots.flatMap((root) => flattenTree(root)));
+  
+  lineageList.forEach((lineage) => {
+    if (!allTreeNodes.has(lineage) || !(lineage.source === 'XXXY' || lineage.destination === 'XXXY')) {
+      freeNodes.push(lineage);
+    }
+  });
+  
+  return { tree: roots, freeNodes };
+}
+
+function flattenTree(node: TreeNode): Lineage[] {
+  return [node.lineage, ...node.children.flatMap(flattenTree)];
+}
+
+const { tree, freeNodes } = buildRecursiveTree(lineageList);
+console.log("Tree:", tree);
+console.log("Free Nodes:", freeNodes);
