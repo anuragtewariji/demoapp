@@ -1,84 +1,56 @@
-interface Lineage {
-  eventId: string;
+class Lineage {
   source: string;
   destination: string;
+
+  constructor(source: string, destination: string) {
+    this.source = source;
+    this.destination = destination;
+  }
 }
 
-interface TreeNode {
-  lineage: Lineage;
-  children: TreeNode[];
-}
+function forwardSequence(lineageObject: Lineage, lineageList: Lineage[]): boolean {
+  let currentLineage: Lineage | null = lineageObject;
+  let visited = new Set<string>(); // Track visited nodes to avoid infinite loops
 
-function buildRecursiveTree(lineageList: Lineage[]): { tree: TreeNode[]; freeNodes: Lineage[] } {
-  const sourceMap = new Map<string, Lineage[]>();
-  const destinationMap = new Map<string, Lineage>();
-
-  lineageList.forEach((lineage) => {
-    if (!sourceMap.has(lineage.source)) {
-      sourceMap.set(lineage.source, []);
+  // Traverse the lineage sequence
+  while (currentLineage) {
+    // Check if the current lineage's destination is 'XXXY'
+    if (currentLineage.destination === "XXXY") {
+      return true;
     }
-    sourceMap.get(lineage.source)?.push(lineage);
-    destinationMap.set(lineage.destination, lineage);
-  });
 
-  const roots: TreeNode[] = [];
-  const freeNodes: Lineage[] = [];
-  const visited = new Set<string>();
-
-  function buildTree(lineage: Lineage, containsXXXY: boolean): TreeNode | null {
-    const newContainsXXXY = containsXXXY || lineage.source === 'XXXY' || lineage.destination === 'XXXY';
-    const children = sourceMap.get(lineage.destination)
-      ?.map(child => buildTree(child, newContainsXXXY))
-      .filter(child => child !== null) as TreeNode[] || [];
-
-    if (newContainsXXXY) {
-      return { lineage, children };
+    // Prevent cycles
+    if (visited.has(currentLineage.source)) {
+      return false;
     }
-    return null;
+    visited.add(currentLineage.source);
+
+    // Find the next lineage in the sequence where the source matches the current destination
+    currentLineage = lineageList.find((l) => l.source === currentLineage.destination) || null;
   }
 
-  lineageList.forEach((lineage) => {
-    if (!destinationMap.has(lineage.source)) {
-      const tree = buildTree(lineage, false);
-      if (tree) {
-        roots.push(tree);
-        flattenTree(tree).forEach(node => visited.add(node.eventId + node.source + node.destination));
-      }
-    }
-  });
-
-  lineageList.forEach((lineage) => {
-    const nodeKey = lineage.eventId + lineage.source + lineage.destination;
-    if (!visited.has(nodeKey)) {
-      freeNodes.push(lineage);
-    }
-  });
-
-  return { tree: roots, freeNodes };
+  return false;
 }
 
-function flattenTree(node: TreeNode): Lineage[] {
-  return [node.lineage, ...node.children.flatMap(flattenTree)];
+function backwardSequence(lineageObject: Lineage, lineageList: Lineage[]): boolean {
+  let currentLineage: Lineage | null = lineageObject;
+  let visited = new Set<string>(); // To prevent infinite loops
+
+  while (currentLineage) {
+    // If we reach an object where source is 'XXXY', return true
+    if (currentLineage.source === "XXXY") {
+      return true;
+    }
+
+    // Prevent cycles
+    if (visited.has(currentLineage.source)) {
+      return false;
+    }
+    visited.add(currentLineage.source);
+
+    // Find the next lineage where the destination matches the current source
+    currentLineage = lineageList.find((l) => l.destination === currentLineage.source) || null;
+  }
+
+  return false;
 }
-
-const lineageList: Lineage[] = [
-  { eventId: 'E1', source: 'FF', destination: 'CC' },
-  { eventId: 'E1', source: 'FF', destination: 'B' },
-  { eventId: 'E1', source: 'A', destination: 'B' },
-  { eventId: 'E1', source: 'B', destination: 'C' },
-  { eventId: 'E1', source: 'B', destination: 'XXXY' },
-  { eventId: 'E1', source: 'C', destination: 'Y' },
-  { eventId: 'E1', source: 'XXXY', destination: 'aa' },
-  { eventId: 'E1', source: 'XXXY', destination: 'OO' },
-  { eventId: 'E1', source: 'OO', destination: 'QQ' },
-  { eventId: 'E1', source: 'Z', destination: 'Q' },
-  { eventId: 'E1', source: 'P', destination: 'EE' },
-  { eventId: 'E1', source: 'P', destination: 'F' },
-  { eventId: 'E1', source: 'Q', destination: 'DD' },
-  { eventId: 'E1', source: 'EE', destination: 'VV' },
-  { eventId: 'E1', source: 'aa', destination: 'F' },
-];
-
-const { tree, freeNodes } = buildRecursiveTree(lineageList);
-console.log("Tree:", JSON.stringify(tree, null, 2));
-console.log("Free Nodes:", JSON.stringify(freeNodes, null, 2));
