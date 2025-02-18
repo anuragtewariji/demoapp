@@ -12,7 +12,7 @@ interface TreeNode {
 function buildRecursiveTree(lineageList: Lineage[]): { tree: TreeNode[]; freeNodes: Lineage[] } {
   const sourceMap = new Map<string, Lineage[]>();
   const destinationMap = new Map<string, Lineage>();
-  
+
   lineageList.forEach((lineage) => {
     if (!sourceMap.has(lineage.source)) {
       sourceMap.set(lineage.source, []);
@@ -23,28 +23,37 @@ function buildRecursiveTree(lineageList: Lineage[]): { tree: TreeNode[]; freeNod
 
   const roots: TreeNode[] = [];
   const freeNodes: Lineage[] = [];
-  
-  function buildTree(lineage: Lineage): TreeNode {
-    return {
-      lineage,
-      children: sourceMap.get(lineage.destination)?.map(buildTree) || []
-    };
+  const visited = new Set<string>();
+
+  function buildTree(lineage: Lineage, containsXXXY: boolean): TreeNode | null {
+    const newContainsXXXY = containsXXXY || lineage.source === 'XXXY' || lineage.destination === 'XXXY';
+    const children = sourceMap.get(lineage.destination)
+      ?.map(child => buildTree(child, newContainsXXXY))
+      .filter(child => child !== null) as TreeNode[] || [];
+
+    if (newContainsXXXY) {
+      return { lineage, children };
+    }
+    return null;
   }
-  
+
   lineageList.forEach((lineage) => {
-    if (!destinationMap.has(lineage.source) || lineage.destination === 'XXXY') {
-      roots.push(buildTree(lineage));
+    if (!destinationMap.has(lineage.source)) {
+      const tree = buildTree(lineage, false);
+      if (tree) {
+        roots.push(tree);
+        flattenTree(tree).forEach(node => visited.add(node.eventId + node.source + node.destination));
+      }
     }
   });
-  
-  const allTreeNodes = new Set(roots.flatMap((root) => flattenTree(root)));
-  
+
   lineageList.forEach((lineage) => {
-    if (!allTreeNodes.has(lineage) || !(lineage.source === 'XXXY' || lineage.destination === 'XXXY')) {
+    const nodeKey = lineage.eventId + lineage.source + lineage.destination;
+    if (!visited.has(nodeKey)) {
       freeNodes.push(lineage);
     }
   });
-  
+
   return { tree: roots, freeNodes };
 }
 
@@ -52,6 +61,24 @@ function flattenTree(node: TreeNode): Lineage[] {
   return [node.lineage, ...node.children.flatMap(flattenTree)];
 }
 
+const lineageList: Lineage[] = [
+  { eventId: 'E1', source: 'FF', destination: 'CC' },
+  { eventId: 'E1', source: 'FF', destination: 'B' },
+  { eventId: 'E1', source: 'A', destination: 'B' },
+  { eventId: 'E1', source: 'B', destination: 'C' },
+  { eventId: 'E1', source: 'B', destination: 'XXXY' },
+  { eventId: 'E1', source: 'C', destination: 'Y' },
+  { eventId: 'E1', source: 'XXXY', destination: 'aa' },
+  { eventId: 'E1', source: 'XXXY', destination: 'OO' },
+  { eventId: 'E1', source: 'OO', destination: 'QQ' },
+  { eventId: 'E1', source: 'Z', destination: 'Q' },
+  { eventId: 'E1', source: 'P', destination: 'EE' },
+  { eventId: 'E1', source: 'P', destination: 'F' },
+  { eventId: 'E1', source: 'Q', destination: 'DD' },
+  { eventId: 'E1', source: 'EE', destination: 'VV' },
+  { eventId: 'E1', source: 'aa', destination: 'F' },
+];
+
 const { tree, freeNodes } = buildRecursiveTree(lineageList);
-console.log("Tree:", tree);
-console.log("Free Nodes:", freeNodes);
+console.log("Tree:", JSON.stringify(tree, null, 2));
+console.log("Free Nodes:", JSON.stringify(freeNodes, null, 2));
