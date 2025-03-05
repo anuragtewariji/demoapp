@@ -35,3 +35,4 @@ if [ $SSH_EXIT_STATUS -ne 0 ]; then
     echo "SSH command failed after $MAX_RETRIES attempts."
     # Handle the failure accordingly
 fi
+ssh user@remote_host 'nohup remote_command > output.log 2>&1 &' &
