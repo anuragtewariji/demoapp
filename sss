@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# SSH connection details
+USER="username"
+HOST="hostname"
+COMMAND="your_command_here"
+
+# Retry configuration
+MAX_RETRIES=5
+RETRY_DELAY=10  # seconds
+
+# Initialize attempt counter
+attempt=0
+
+while (( attempt < MAX_RETRIES ))
+do
+    ((attempt++))
+    echo "Attempt $attempt: Connecting to $HOST..."
+
+    # Execute SSH command
+    ssh "$USER@$HOST" "$COMMAND"
+    SSH_EXIT_STATUS=$?
+
+    if [ $SSH_EXIT_STATUS -eq 0 ]; then
+        echo "SSH command executed successfully."
+        break
+    else
+        echo "SSH command failed with exit status $SSH_EXIT_STATUS."
+        echo "Retrying in $RETRY_DELAY seconds..."
+        sleep $RETRY_DELAY
+    fi
+done
+
+if [ $SSH_EXIT_STATUS -ne 0 ]; then
+    echo "SSH command failed after $MAX_RETRIES attempts."
+    # Handle the failure accordingly
+fi
