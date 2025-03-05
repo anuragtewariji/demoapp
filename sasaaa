@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Configuration
+REMOTE_USER="your_user"
+REMOTE_HOST="your_host"
+REMOTE_SCRIPT="/path/to/remote/script.sh"
+TIMEOUT_DURATION=30  # Timeout in seconds
+
+# Run SSH command with timeout
+timeout $TIMEOUT_DURATION ssh -o ConnectTimeout=10 "$REMOTE_USER@$REMOTE_HOST" "bash -s" < "$REMOTE_SCRIPT"
+
+# Check exit status
+if [[ $? -eq 124 ]]; then
+    echo "Error: SSH command timed out."
+    exit 1
+elif [[ $? -ne 0 ]]; then
+    echo "Error: SSH command failed."
+    exit 2
+else
+    echo "SSH command executed successfully."
+fi
