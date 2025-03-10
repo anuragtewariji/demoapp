@@ -1,0 +1,111 @@
+// event.model.ts
+export interface Payload {
+  header: any;  // The header can be any data type depending on the use case
+  body: any;    // The body can also be dynamic (JSON or Avro data)
+}
+
+export class Event {
+  eventid: string;
+  payload: Payload;
+
+  constructor(eventid: string, payload: Payload) {
+    this.eventid = eventid;
+    this.payload = payload;
+  }
+}
+----------------------------------------------
+  // event.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Event } from './event.model';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class EventService {
+
+  private apiUrl = 'https://your-microservice-endpoint.com/events'; // URL to your microservice
+
+  constructor(private http: HttpClient) {}
+
+  // Save event to microservice
+  saveEvent(event: Event): Observable<any> {
+    return this.http.post(this.apiUrl, event);
+  }
+
+  // Retrieve event from microservice by eventid
+  getEvent(eventid: string): Observable<Event> {
+    return this.http.get<Event>(`${this.apiUrl}/${eventid}`);
+  }
+}
+---------------------------------------------------------------------------------
+    // event.component.ts
+import { Component } from '@angular/core';
+import { EventService } from './event.service';
+import { Event, Payload } from './event.model';
+
+@Component({
+  selector: 'app-event',
+  templateUrl: './event.component.html',
+})
+export class EventComponent {
+  eventid: string = '';
+  payload: Payload = { header: {}, body: {} };
+  event: Event | null = null;
+
+  constructor(private eventService: EventService) {}
+
+  // Save event
+  saveEvent(): void {
+    const newEvent = new Event(this.eventid, this.payload);
+    this.eventService.saveEvent(newEvent).subscribe(
+      (response) => {
+        console.log('Event saved successfully', response);
+      },
+      (error) => {
+        console.error('Error saving event', error);
+      }
+    );
+  }
+
+  // Retrieve event by eventid
+  retrieveEvent(): void {
+    this.eventService.getEvent(this.eventid).subscribe(
+      (response) => {
+        this.event = response;
+        console.log('Event retrieved:', this.event);
+      },
+      (error) => {
+        console.error('Error retrieving event', error);
+      }
+    );
+  }
+}
+--------------------------------------------------
+      <!-- event.component.html -->
+<div>
+  <label for="eventid">Event ID:</label>
+  <input type="text" id="eventid" [(ngModel)]="eventid" />
+
+  <label for="payloadHeader">Payload Header:</label>
+  <input type="text" id="payloadHeader" [(ngModel)]="payload.header" />
+
+  <label for="payloadBody">Payload Body (JSON):</label>
+  <textarea id="payloadBody" [(ngModel)]="payload.body"></textarea>
+
+  <button (click)="saveEvent()">Save Event</button>
+  <button (click)="retrieveEvent()">Retrieve Event</button>
+</div>
+
+<div *ngIf="event">
+  <h3>Event Retrieved</h3>
+  <pre>{{ event | json }}</pre>
+</div>
+------------------------------
+            // event.model.ts (Updated)
+export interface Payload {
+  header: any;
+  body: any;
+  format: 'json' | 'avro';  // Added format type (JSON or Avro)
+}
