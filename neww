@@ -1,0 +1,206 @@
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificRecord;
+import org.json.JSONObject;
+
+public class Event {
+    private String eventId;
+    private Payload payload;
+
+    // Constructor
+    public Event(String eventId, Payload payload) {
+        this.eventId = eventId;
+        this.payload = payload;
+    }
+
+    // Getters and Setters
+    public String getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
+    }
+
+    public Payload getPayload() {
+        return payload;
+    }
+
+    public void setPayload(Payload payload) {
+        this.payload = payload;
+    }
+
+    // Method to validate payload attributes
+    public boolean isValidPayload() {
+        return payload.isValid();
+    }
+
+    // Method to save to the database
+    public boolean saveToDatabase() {
+        // Implement database interaction here
+        // For example, save this Event object to the database
+        // Return true if the save was successful, otherwise false
+        return true;
+    }
+}
+------------------------------------------------------------------------
+
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import org.json.JSONObject;
+
+import java.util.List;
+
+public class Payload {
+    private JSONObject header;
+    private Object body; // The body could be either JSON or Avro
+
+    private PayloadType payloadType; // JSON or AVRO type
+
+    // Master list of valid attributes
+    private List<String> masterList; // List of valid keys
+
+    // Constructor
+    public Payload(JSONObject header, Object body, PayloadType payloadType, List<String> masterList) {
+        this.header = header;
+        this.body = body;
+        this.payloadType = payloadType;
+        this.masterList = masterList;
+    }
+
+    // Getters and Setters
+    public JSONObject getHeader() {
+        return header;
+    }
+
+    public void setHeader(JSONObject header) {
+        this.header = header;
+    }
+
+    public Object getBody() {
+        return body;
+    }
+
+    public void setBody(Object body) {
+        this.body = body;
+    }
+
+    public PayloadType getPayloadType() {
+        return payloadType;
+    }
+
+    public void setPayloadType(PayloadType payloadType) {
+        this.payloadType = payloadType;
+    }
+
+    public List<String> getMasterList() {
+        return masterList;
+    }
+
+    public void setMasterList(List<String> masterList) {
+        this.masterList = masterList;
+    }
+
+    // Method to validate attributes in body (both JSON and Avro) against the master list
+    public boolean isValid() {
+        if (payloadType == PayloadType.JSON) {
+            return validateJsonAttributes();
+        } else if (payloadType == PayloadType.AVRO) {
+            return validateAvroAttributes();
+        }
+        return false;
+    }
+
+    // Validate JSON attributes
+    private boolean validateJsonAttributes() {
+        JSONObject bodyJson = (JSONObject) body;
+        for (String key : bodyJson.keySet()) {
+            if (!masterList.contains(key)) {
+                return false; // Invalid attribute in JSON body
+            }
+        }
+        return true;
+    }
+
+    // Validate Avro attributes
+    private boolean validateAvroAttributes() {
+        GenericRecord avroRecord = (GenericRecord) body;
+        for (Schema.Field field : avroRecord.getSchema().getFields()) {
+            if (!masterList.contains(field.name())) {
+                return false; // Invalid attribute in Avro body
+            }
+        }
+        return true;
+    }
+}
+
+----------------------------------------------------------------
+
+public enum PayloadType {
+    JSON,
+    AVRO
+}
+-----------------------------------
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class EventDatabaseService {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/your_db";
+    private static final String DB_USERNAME = "root";
+    private static final String DB_PASSWORD = "password";
+
+    public boolean saveEvent(Event event) {
+        if (!event.isValidPayload()) {
+            System.out.println("Invalid payload.");
+            return false;
+        }
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD)) {
+            String query = "INSERT INTO events (eventId, payload) VALUES (?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, event.getEventId());
+                stmt.setString(2, event.getPayload().toString()); // Store payload as string (you could serialize it)
+                int rowsInserted = stmt.executeUpdate();
+                return rowsInserted > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
+--------------------------------------
+
+
+import org.json.JSONObject;
+
+import java.util.Arrays;
+import java.util.List;
+
+public class Main {
+    public static void main(String[] args) {
+        // Example of creating JSON payload
+        JSONObject header = new JSONObject();
+        header.put("timestamp", System.currentTimeMillis());
+
+        JSONObject body = new JSONObject();
+        body.put("name", "Event 1");
+        body.put("description", "This is an example event");
+
+        List<String> masterList = Arrays.asList("name", "description");
+
+        Payload payload = new Payload(header, body, PayloadType.JSON, masterList);
+        Event event = new Event("event1", payload);
+
+        // Saving event to the database
+        EventDatabaseService dbService = new EventDatabaseService();
+        if (dbService.saveEvent(event)) {
+            System.out.println("Event saved successfully.");
+        } else {
+            System.out.println("Failed to save event.");
+        }
+    }
+}
+
