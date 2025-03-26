@@ -1,0 +1,107 @@
+To package an Angular app into a JBoss deployable WAR (Web Application Archive) manually, you'll need to follow a few steps to ensure that the Angular app is bundled correctly and served by JBoss. Here's a general guide to get you through the process:
+
+1. Build the Angular App
+First, you need to build your Angular application for production. This will generate the necessary files for deployment.
+
+Navigate to your Angular project directory.
+
+Run the Angular build command:
+
+bash
+Copy
+ng build --prod
+This will generate a dist/ folder in your Angular project directory. Inside dist/, there will be a subfolder with your app name (e.g., dist/your-app-name). This folder contains the optimized files (HTML, JS, CSS) needed for production deployment.
+
+2. Create the WAR Structure
+You now need to create a WAR structure to deploy the Angular app to JBoss. A typical WAR structure for a JBoss application looks like this:
+
+css
+Copy
+your-app.war/
+  ├── WEB-INF/
+  ├── index.html
+  ├── assets/
+  ├── runtime.js
+  ├── main.js
+  ├── polyfills.js
+  ├── styles.css
+  └── (other Angular build files)
+3. Move Angular Build Files into WAR
+Create a directory structure for your WAR file:
+
+bash
+Copy
+mkdir -p your-app/WEB-INF/classes/
+Copy the contents of the dist/your-app-name folder (from the Angular build) into the root of the WAR (your-app/).
+
+Move the index.html file and other files such as JavaScript and CSS files into the root of the your-app/ folder.
+
+Now, create a WEB-INF/web.xml file. This file tells the JBoss server how to handle the application. Here's a basic web.xml for an Angular app:
+
+xml
+Copy
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+         http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+    <servlet>
+        <servlet-name>default</servlet-name>
+        <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+        <init-param>
+            <param-name>debug</param-name>
+            <param-value>0</param-value>
+        </init-param>
+        <init-param>
+            <param-name>readonly</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
+            <param-name>listings</param-name>
+            <param-value>false</param-value>
+        </init-param>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!-- Optionally configure error handling for Angular routes -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/index.html</location>
+    </error-page>
+</web-app>
+The web.xml ensures that JBoss serves your static Angular files correctly.
+
+4. Create the WAR File
+Once you've set up the directory structure and added your files, you can create the WAR file. Navigate to the root of your your-app/ directory (which contains the WEB-INF folder and Angular build files) and run:
+
+bash
+Copy
+jar -cvf your-app.war *
+This command will package everything into a WAR file.
+
+5. Deploy to JBoss
+Copy the your-app.war file to the JBoss deployment directory (typically under JBOSS_HOME/standalone/deployments/).
+
+Restart JBoss or use the JBoss management console to deploy the WAR.
+
+Once deployed, you should be able to access your Angular app at http://<jboss-server>:<port>/your-app.
+
+6. Verify Deployment
+After JBoss has finished deploying the WAR file, open your browser and navigate to:
+
+php-template
+Copy
+http://<jboss-server>:<port>/your-app
+You should now see your Angular app running on JBoss.
+
+Notes:
+Ensure that the JBoss server has static content handling enabled, as it needs to serve the generated Angular files.
+
+If you're using Angular's routing, you may need to configure the web.xml file to handle route-based navigation correctly. This typically involves redirecting all requests to index.html for Angular to handle.
+
+Let me know if you need further clarification on any step!
