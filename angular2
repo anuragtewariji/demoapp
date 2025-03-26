@@ -1,0 +1,127 @@
+Step-by-Step:
+Install Maven: Make sure Maven is installed on your machine. You can download and install it from here.
+
+Initialize Maven Project: If you don’t have a Maven project already, create a new Maven project in the root of your Angular application.
+
+Add Maven Dependencies: In your pom.xml, add the necessary Maven plugins for WAR packaging and the Angular build process.
+
+xml
+Copy
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>your-app</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <packaging>war</packaging>
+
+    <build>
+        <plugins>
+            <!-- Node.js and NPM plugin -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.12</version>
+                <configuration>
+                    <nodeVersion>v14.15.0</nodeVersion>
+                    <npmVersion>6.14.8</npmVersion>
+                    <yarnVersion>1.22.5</yarnVersion>
+                    <installDirectory>${project.basedir}/src/main/frontend</installDirectory>
+                    <workingDirectory>${project.basedir}</workingDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>install-node-and-yarn</goal>
+                            <goal>npm</goal>
+                            <goal>build</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- WAR Packaging -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <webappDirectory>${project.build.directory}/webapp</webappDirectory>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                    <warName>your-app</warName>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+2. Configure Angular Build Output
+Make sure the Angular ng build --prod command outputs the build files into a directory that Maven can reference when packaging the WAR.
+
+You will configure Angular to build its output into a directory like src/main/webapp/ where Maven will pick it up.
+
+In angular.json, modify the outputPath property to point to src/main/webapp.
+
+json
+Copy
+"projects": {
+  "your-app": {
+    "architect": {
+      "build": {
+        "options": {
+          "outputPath": "src/main/webapp"
+        }
+      }
+    }
+  }
+}
+3. Run the Build Process
+Now that everything is set up, you can run the following Maven commands to:
+
+Build the Angular project: This will run the Angular build process, outputting to the src/main/webapp folder.
+
+Run this command to build your Angular project:
+
+bash
+Copy
+mvn clean install
+This will trigger Maven to:
+
+Run ng build --prod through the frontend-maven-plugin.
+
+Generate a WAR file that contains the Angular build output.
+
+Deploy the WAR to JBoss: After the WAR is generated, you can deploy it to JBoss (just copy the WAR file to the JBOSS_HOME/standalone/deployments/ folder).
+
+4. Verify the WAR File
+After running the Maven command, you should see a your-app.war file in the target/ directory. This WAR file can be deployed to JBoss.
+
+Alternative Approach: Using a Custom Script
+If you're not using Maven, you can also automate the process with a shell script or Node.js script to invoke ng build --prod and then package the output into a WAR file.
+
+For example, you could use a Node.js script to copy files and create a WAR:
+
+bash
+Copy
+#!/bin/bash
+# Run Angular build
+ng build --prod
+
+# Create WAR directory structure
+mkdir -p my-app/WEB-INF/classes
+
+# Copy Angular build output into WAR directory
+cp -r dist/your-app/* my-app/
+
+# Create the WAR file
+jar -cvf my-app.war -C my-app/ .
+
+# Optionally, deploy to JBoss
+# cp my-app.war $JBOSS_HOME/standalone/deployments/
+This approach is more lightweight but requires manual steps if you want to automate deployments beyond the build process.
+
+Conclusion
+By setting up Maven (or using a custom script), you can automate the process of packaging your Angular app into a WAR file with every build. This way, you can seamlessly integrate your Angular front-end with a Java-based back-end (e.g., JBoss).
