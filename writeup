@@ -1,1 +1,7 @@
+Channel metadata refers to the information associated with the source channel and its mapping to a specific channel definition in the application. It consists of two key elements:
 
+Source Channel String: This is the identifier used by the source, representing the channel from which data is transmitted or received. It is typically preferred by the source system for communication.
+
+Unique Channel Definition at XXX Application End: This refers to the specific channel definition at the application end (denoted as XXX) that corresponds to the source channel. It defines how the source channel is processed or mapped within the application, ensuring seamless integration and data flow.
+
+In summary, channel metadata helps in defining the relationship between the source channel and its corresponding unique definition in the application, enabling proper routing and handling of data across systems.
