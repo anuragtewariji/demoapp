@@ -1,0 +1,107 @@
+import {
+  Component,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
+  HostListener,
+} from '@angular/core';
+import {
+  select,
+  forceSimulation,
+  forceManyBody,
+  forceCenter,
+  forceLink,
+  scaleOrdinal,
+  schemeCategory10,
+  drag,
+  SimulationNodeDatum,
+} from 'd3';
+
+@Component({
+  selector: 'app-d3-force',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+})
+export class AppComponent implements AfterViewInit {
+  @ViewChild('chart') chartRef!: ElementRef<HTMLDivElement>;
+
+  private svg: any;
+  private simulation: any;
+  private width = 500;
+  private height = 500;
+
+  private nodes = [/* your nodes */];
+  private links = [/* your links */];
+  private color = scaleOrdinal(schemeCategory10);
+
+  ngAfterViewInit() {
+    this.renderChart();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.repositionChart();
+  }
+
+  renderChart() {
+    const container = this.chartRef.nativeElement;
+    this.width = container.clientWidth;
+    this.height = container.clientHeight;
+
+    this.svg = select(container)
+      .append('svg')
+      .attr('width', this.width)
+      .attr('height', this.height);
+
+    const link = this.svg
+      .append('g')
+      .selectAll('line')
+      .data(this.links)
+      .join('line')
+      .attr('stroke', '#999')
+      .attr('stroke-opacity', 0.6);
+
+    const node = this.svg
+      .append('g')
+      .selectAll('g')
+      .data(this.nodes)
+      .enter()
+      .append('g');
+
+    node
+      .append('circle')
+      .attr('r', 10)
+      .style('fill', (d) => this.color(d.group));
+
+    node
+      .append('text')
+      .text((d) => d.name)
+      .attr('x', 12)
+      .attr('y', 3);
+
+    this.simulation = forceSimulation(this.nodes)
+      .force(
+        'link',
+        forceLink(this.links)
+          .id((d) => d.index)
+          .distance(50)
+      )
+      .force('charge', forceManyBody().strength(-200))
+      .force('center', forceCenter(this.width / 2, this.height / 2))
+      .on('tick', () => {
+        node.attr('transform', (d) => `translate(${d.x},${d.y})`);
+        link
+          .attr('x1', (d) => d.source.x)
+          .attr('y1', (d) => d.source.y)
+          .attr('x2', (d) => d.target.x)
+          .attr('y2', (d) => d.target.y);
+      });
+  }
+
+  repositionChart() {
+    this.width = this.chartRef.nativeElement.clientWidth;
+    this.height = this.chartRef.nativeElement.clientHeight;
+    this.svg.attr('width', this.width).attr('height', this.height);
+    this.simulation.force('center', forceCenter(this.width / 2, this.height / 2)).alpha(1).restart();
+  }
+}
