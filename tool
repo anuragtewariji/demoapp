@@ -107,3 +107,63 @@ How to add ToolTip to D3 Tree node? - Stack Overflow
 
 How to make tooltips show up in d3.js on 'mouseover' and be removed at 'mouseout'? - Stack Overflow
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let clickTimeout: any;
+
+const nodeEnter = node
+  .enter()
+  .append('g')
+  .attr('class', 'node')
+  .attr('transform', (d: any) => {
+    return 'translate(' + source.y0 + ',' + source.x0 + ')';
+  })
+  .on('click', (_, d) => {
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+      clickTimeout = null;
+      // Double-click detected
+      alert('Double-clicked on node: ' + d.data.name);
+    } else {
+      clickTimeout = setTimeout(() => {
+        clickTimeout = null;
+        // Single click action
+        this.click(d);
+      }, 300); // Adjust the timeout as needed
+    }
+  });
+
