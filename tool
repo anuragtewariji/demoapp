@@ -1,35 +1,35 @@
-🧩 Implementation Details
-1. Create and Style the Tooltip Div
-
-In your component's ngAfterViewInit method, add the following code to create and style the tooltip:​
+1. Create a Tooltip Element
+Add a hidden div to serve as the tooltip. This should be placed within your Angular component's ngAfterViewInit method:​
 
 typescript
 Copy
 Edit
 const tooltip = d3.select('body')
   .append('div')
-  .attr('class', 'd3-tooltip')
+  .attr('class', 'tooltip')
   .style('position', 'absolute')
-  .style('text-align', 'center')
+  .style('background', '#fff')
   .style('padding', '6px')
-  .style('font', '12px sans-serif')
-  .style('background', 'lightsteelblue')
-  .style('border', '0px')
-  .style('border-radius', '8px')
+  .style('border', '1px solid #ccc')
+  .style('border-radius', '4px')
   .style('pointer-events', 'none')
   .style('opacity', 0);
-2. Attach Event Listeners to Nodes
+This div will display the tooltip content and is initially hidden by setting its opacity to 0.​
 
-In your update method, modify the nodeEnter selection to include event listeners:​
+2. Attach Tooltip Events to Nodes
+Within your update method, after appending circles to the nodes, add event listeners for mouseover, mousemove, and mouseout to handle the tooltip display:​
 
 typescript
 Copy
 Edit
 nodeEnter
+  .append('circle')
+  .attr('class', (d: any) => (d._children ? 'node fill' : 'node'))
+  .attr('r', 1e-6)
   .on('mouseover', function(event, d) {
     tooltip.transition()
       .duration(200)
-      .style('opacity', .9);
+      .style('opacity', 0.9);
     tooltip.html(d.data.name)
       .style('left', (event.pageX + 10) + 'px')
       .style('top', (event.pageY - 28) + 'px');
@@ -44,126 +44,49 @@ nodeEnter
       .duration(500)
       .style('opacity', 0);
   });
-This code sets up the tooltip to appear when a user hovers over a node, follow the cursor, and disappear when the cursor leaves the node.​
-Medium
+This code displays the tooltip with the node's name when hovered over and positions it near the cursor. The tooltip fades in on hover and fades out when the cursor leaves the node.​
 
-🧪 Example
-Here's a simplified example of how the tooltip behaves:​
-Pluralsight
-+3
-Google Groups
-+3
-Medium
-+3
+3. Implement Double-Click Alert
+To trigger an alert on double-clicking a node, add a dblclick event listener to the node group (g element):​
 
-html
+typescript
 Copy
 Edit
-<!-- Tooltip Div -->
-<div class="d3-tooltip" style="position: absolute; opacity: 0;"></div>
+nodeEnter
+  .on('click', (_, d) => this.click(d))
+  .on('dblclick', function(event, d) {
+    alert('Double-clicked on node: ' + d.data.name);
+  });
+This will display an alert box showing the name of the node that was double-clicked.​
+
+4. Style the Tooltip
+Ensure you have appropriate CSS to style the tooltip. You can add the following styles to your component's styles:​
+
 css
 Copy
 Edit
-/* Tooltip Styling */
-.d3-tooltip {
+.tooltip {
   position: absolute;
   text-align: center;
+  width: auto;
   padding: 6px;
   font: 12px sans-serif;
-  background: lightsteelblue;
-  border: 0px;
-  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   pointer-events: none;
+  opacity: 0;
 }
-javascript
-Copy
-Edit
-// D3 Event Listeners
-nodeEnter
-  .on('mouseover', function(event, d) {
-    tooltip.transition()
-      .duration(200)
-      .style('opacity', .9);
-    tooltip.html(d.data.name)
-      .style('left', (event.pageX + 10) + 'px')
-      .style('top', (event.pageY - 28) + 'px');
-  })
-  .on('mousemove', function(event) {
-    tooltip
-      .style('left', (event.pageX + 10) + 'px')
-      .style('top', (event.pageY - 28) + 'px');
-  })
-  .on('mouseout', function() {
-    tooltip.transition()
-      .duration(500)
-      .style('opacity', 0);
-  });
-🔗 Additional Resources
-For more detailed examples and variations of tooltips in D3.js, you can refer to the following resources:
+This CSS ensures the tooltip has a white background, rounded corners, and is hidden by default.​
 
-Building tooltips with d3.js
+By following these steps, you will enhance your D3.js collapsible tree diagram with interactive tooltips on each node and an alert on double-clicking a node.
 
-How to add ToolTip to D3 Tree node? - Stack Overflow
 
-How to make tooltips show up in d3.js on 'mouseover' and be removed at 'mouseout'? - Stack Overflow
+Sources
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-let clickTimeout: any;
-
-const nodeEnter = node
-  .enter()
-  .append('g')
-  .attr('class', 'node')
-  .attr('transform', (d: any) => {
-    return 'translate(' + source.y0 + ',' + source.x0 + ')';
-  })
-  .on('click', (_, d) => {
-    if (clickTimeout) {
-      clearTimeout(clickTimeout);
-      clickTimeout = null;
-      // Double-click detected
-      alert('Double-clicked on node: ' + d.data.name);
-    } else {
-      clickTimeout = setTimeout(() => {
-        clickTimeout = null;
-        // Single click action
-        this.click(d);
-      }, 300); // Adjust the timeout as needed
-    }
-  });
 
