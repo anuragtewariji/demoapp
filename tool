@@ -90,3 +90,93 @@ Sources
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. Add Tooltip Element to the DOM
+Create a tooltip <div> outside the SVG to display node information on hover.​
+
+In your Angular component's template:
+
+html
+Copy
+Edit
+<div #wrapper [style.font-size]='fontSize|async' class='wrapper' id='d3noob'>
+  <span #marginDiv class='fade'>{{treeData?.name}}</span>
+</div>
+<div id="tooltip" class="tooltip" style="position: absolute; opacity: 0; pointer-events: none;"></div>
+In your component's styles:
+
+css
+Copy
+Edit
+.tooltip {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+🧩 2. Implement Tooltip Behavior in D3
+Within your update() method, add event listeners to each node to handle tooltip display and double-click alerts.​
+
+Modify the nodeEnter selection:
+
+typescript
+Copy
+Edit
+const tooltip = d3.select('#tooltip');
+
+const nodeEnter = node
+  .enter()
+  .append('g')
+  .attr('class', 'node')
+  .attr('transform', (d: any) => {
+    return 'translate(' + source.y0 + ',' + source.x0 + ')';
+  })
+  .on('click', (_, d) => this.click(d))
+  .on('dblclick', (_, d) => alert(`Double-clicked on node: ${d.data.name}`))
+  .on('mouseover', function (event, d) {
+    tooltip
+      .style('opacity', 1)
+      .html(`<strong>${d.data.name}</strong>`);
+  })
+  .on('mousemove', function (event) {
+    tooltip
+      .style('left', (event.pageX + 10) + 'px')
+      .style('top', (event.pageY + 10) + 'px');
+  })
+  .on('mouseout', function () {
+    tooltip.style('opacity', 0);
+  });
+This setup ensures that when a user hovers over a node, a tooltip appears near the cursor displaying the node's name. On double-clicking a node, an alert box will show the node's name.​
+
+
+
+
+
+
+
