@@ -1,0 +1,65 @@
+<!-- report-selection.component.html -->
+<div class="container mt-4">
+  <div class="form-group">
+    <label for="reportType">Select Report Type</label>
+    <select class="form-control" [(ngModel)]="selectedReportType">
+      <option value="consumer">Consumer Report</option>
+      <option value="application">Application Report</option>
+    </select>
+  </div>
+
+  <div *ngIf="selectedReportType === 'consumer'" class="mt-4">
+    <h5>Consumer Report Options (Wizard Style)</h5>
+
+    <ul class="nav nav-tabs">
+      <li class="nav-item" (click)="wizardStep = 'mq'">
+        <a class="nav-link" [class.active]="wizardStep === 'mq'">By MQ</a>
+      </li>
+      <li class="nav-item" (click)="wizardStep = 'source'">
+        <a class="nav-link" [class.active]="wizardStep === 'source'">By Source</a>
+      </li>
+      <li class="nav-item" (click)="wizardStep = 'consumer'">
+        <a class="nav-link" [class.active]="wizardStep === 'consumer'">By Consumer</a>
+      </li>
+    </ul>
+
+    <div class="tab-content p-3 border border-top-0">
+      <div *ngIf="wizardStep === 'mq'">MQ Step Content Here</div>
+      <div *ngIf="wizardStep === 'source'">Source Step Content Here</div>
+      <div *ngIf="wizardStep === 'consumer'">Consumer Step Content Here</div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// report-selection.component.ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-report-selection',
+  templateUrl: './report-selection.component.html',
+})
+export class ReportSelectionComponent {
+  selectedReportType: string = '';
+  wizardStep: 'mq' | 'source' | 'consumer' = 'mq';
+}
+
+
+
+
+
