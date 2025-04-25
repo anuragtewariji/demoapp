@@ -63,3 +63,68 @@ export class ReportSelectionComponent {
 
 
 
+
+
+<!-- Report Type Selection -->
+<div class="mb-3">
+  <label for="reportType">Select Report Type:</label>
+  <select id="reportType" class="form-control" [(ngModel)]="selectedReportType">
+    <option value="">-- Select --</option>
+    <option value="consumer">Consumer Report</option>
+    <option value="application">Application Report</option>
+  </select>
+</div>
+
+<!-- Carousel -->
+<ngb-carousel *ngIf="selectedReportType === 'consumer'" [interval]="0" [showNavigationArrows]="true" [showNavigationIndicators]="false">
+  <ng-template ngbSlide>
+    <div class="text-center">
+      <h3>Step 1: Select By MQ</h3>
+      <button class="btn btn-primary mt-3" (click)="goToStep(2)">Next</button>
+    </div>
+  </ng-template>
+
+  <ng-template ngbSlide>
+    <div class="text-center">
+      <h3>Step 2: Select By Source</h3>
+      <button class="btn btn-secondary mt-3" (click)="goToStep(1)">Back</button>
+      <button class="btn btn-primary mt-3 ml-2" (click)="goToStep(3)">Next</button>
+    </div>
+  </ng-template>
+
+  <ng-template ngbSlide>
+    <div class="text-center">
+      <h3>Step 3: Select By Consumer</h3>
+      <button class="btn btn-secondary mt-3" (click)="goToStep(2)">Back</button>
+    </div>
+  </ng-template>
+</ngb-carousel>
+
+<!-- Application Report Placeholder -->
+<div *ngIf="selectedReportType === 'application'">
+  <h3>Application Report Selected</h3>
+  <!-- Your logic here -->
+</div>
+
+
+
+
+import { Component, ViewChild } from '@angular/core';
+import { NgbCarousel } from '@ng-bootstrap/ng-bootstrap';
+
+@Component({
+  selector: 'app-report',
+  templateUrl: './report.component.html'
+})
+export class ReportComponent {
+  selectedReportType: string = '';
+
+  @ViewChild(NgbCarousel) carousel!: NgbCarousel;
+
+  goToStep(step: number) {
+    this.carousel.select(`${step - 1}`);
+  }
+}
+
+
+
